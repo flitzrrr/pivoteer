@@ -104,6 +104,12 @@ filters matters more than Excel formatting for each row.
   expected for synthetic templates.
 - "DataFrame is empty": pivoteer refuses empty payloads to protect templates.
 
+## Support and Requests
+
+- Bugs: open a GitHub issue using the Bug Report template.
+- Feature requests: open a GitHub issue using the Feature Request template.
+- Security: follow the reporting process in `SECURITY.md`.
+
 ## Security
 
 If you discover a vulnerability, please read `SECURITY.md` for reporting
