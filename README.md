@@ -1,5 +1,9 @@
 # pivoteer
 
+[![CI](https://github.com/flitzrrr/pivoteer/actions/workflows/ci.yml/badge.svg)](https://github.com/flitzrrr/pivoteer/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/pivoteer.svg)](https://pypi.org/project/pivoteer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 pivoteer injects pandas DataFrames into existing Excel templates by editing the
 underlying XML. It resizes Excel Tables (ListObjects) and forces PivotTables to
 refresh on open without corrupting pivot caches.
