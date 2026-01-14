@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 from lxml import etree
+import pandas as pd
 
 from pivoteer.exceptions import InvalidDataError, TemplateNotFoundError, XmlStructureError
 from pivoteer.models import TableRef, WorkbookMap, WorksheetInfo
@@ -78,6 +79,9 @@ class XmlEngine:
         """Inject data rows into sheetData using inline strings for text."""
         if start_row < 1 or start_col < 1:
             raise InvalidDataError("Start row/col must be >= 1.")
+        if not rows:
+            LOGGER.warning("No rows provided for injection; worksheet left unchanged.")
+            return
 
         sheet_data = tree.find(".//main:sheetData", namespaces=_NSMAP_MAIN)
         if sheet_data is None:
@@ -230,7 +234,7 @@ class XmlEngine:
         for child in list(cell):
             cell.remove(child)
 
-        if value is None:
+        if value is None or self._is_missing(value):
             cell.attrib.pop("t", None)
             cell.attrib.pop("s", None)
             return
@@ -250,6 +254,12 @@ class XmlEngine:
         inline = etree.SubElement(cell, f"{{{_NS_MAIN}}}is")
         text = etree.SubElement(inline, f"{{{_NS_MAIN}}}t")
         text.text = text_value
+
+    def _is_missing(self, value: object) -> bool:
+        try:
+            return bool(pd.isna(value))
+        except Exception:
+            return False
 
     def _sort_rows(self, sheet_data: etree._Element) -> None:
         rows = sheet_data.findall("main:row", namespaces=_NSMAP_MAIN)

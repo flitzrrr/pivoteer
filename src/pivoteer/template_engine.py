@@ -10,7 +10,7 @@ from typing import Dict, Iterable, List, Optional
 import pandas as pd
 from lxml import etree
 
-from pivoteer.exceptions import TableNotFoundError, XmlStructureError
+from pivoteer.exceptions import InvalidDataError, TableNotFoundError, XmlStructureError
 from pivoteer.models import TableRef, WorkbookMap
 from pivoteer.table_resizer import TableResizer, TableResizeResult
 from pivoteer.utils import parse_a1_range
@@ -39,6 +39,14 @@ class TemplateEngine:
         table_ref = self._tables.get(table_name)
         if not table_ref:
             raise TableNotFoundError(f"Table not found: {table_name}")
+        if df.empty:
+            raise InvalidDataError(
+                f"Table '{table_name}' requires data, but DataFrame was empty."
+            )
+        if df.columns.empty:
+            raise InvalidDataError(
+                f"Table '{table_name}' requires columns, but DataFrame has none."
+            )
 
         data_rows = df.itertuples(index=False, name=None)
         rows = [list(row) for row in data_rows]
