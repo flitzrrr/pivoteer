@@ -1,8 +1,7 @@
-"""Verify that report_output.xlsx contains resized table range."""
+"""Integration test to verify resized table range in output XLSX."""
 
 from __future__ import annotations
 
-import logging
 import posixpath
 import zipfile
 from pathlib import Path
@@ -11,9 +10,8 @@ from typing import Dict
 from lxml import etree
 
 from pivoteer.utils import parse_a1_range
+from pivoteer.core import Pivoteer
 
-
-LOGGER = logging.getLogger(__name__)
 
 _NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 _NS_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -85,12 +83,31 @@ def _resolve_table_path(archive: zipfile.ZipFile, table_name: str) -> str:
     raise RuntimeError(f"Table {table_name!r} not found.")
 
 
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    report_path = Path("report_output.xlsx")
+def _build_output_report(template_path: Path, output_path: Path) -> None:
+    import pandas as pd
+    from datetime import date, timedelta
 
-    if not report_path.exists():
-        raise FileNotFoundError("report_output.xlsx not found. Run demo_runner.py first.")
+    data = []
+    base = date(2024, 1, 1)
+    for i in range(500):
+        data.append(
+            {
+                "Category": "Hardware",
+                "Region": "North",
+                "Amount": 100.0 + (i * 10.0),
+                "Date": base + timedelta(days=i),
+            }
+        )
+
+    df = pd.DataFrame(data)
+    pivoteer = Pivoteer(template_path)
+    pivoteer.apply_dataframe("DataSource", df)
+    pivoteer.save(output_path)
+
+
+def test_table_range_resized(template_path: Path, tmp_path: Path) -> None:
+    report_path = tmp_path / "report_output.xlsx"
+    _build_output_report(template_path, report_path)
 
     with zipfile.ZipFile(report_path, "r") as archive:
         table_path = _resolve_table_path(archive, "DataSource")
@@ -103,17 +120,22 @@ def main() -> None:
     (start_row, _), (end_row, _) = parse_a1_range(ref)
     row_count = end_row - start_row + 1
 
-    print(f"Table ref: {ref}")
     assert row_count >= 501, (
         f"Expected at least 501 rows (header + 500 data). Got {row_count}."
     )
-    LOGGER.info("Verified table range includes injected data (%s rows).", row_count)
+
+
+def test_pivot_refresh_flag_optional(template_path: Path, tmp_path: Path) -> None:
+    report_path = tmp_path / "report_output.xlsx"
+    _build_output_report(template_path, report_path)
 
     pivot_refresh_enabled = False
     pivot_cache_found = False
     with zipfile.ZipFile(report_path, "r") as archive:
         for filename in archive.namelist():
-            if filename.startswith("xl/pivotCache/pivotCacheDefinition") and filename.endswith(".xml"):
+            if filename.startswith(
+                "xl/pivotCache/pivotCacheDefinition"
+            ) and filename.endswith(".xml"):
                 pivot_cache_found = True
                 pivot_tree = _read_xml(archive, filename)
                 root = pivot_tree.getroot()
@@ -121,15 +143,5 @@ def main() -> None:
                     pivot_refresh_enabled = True
                     break
 
-    if not pivot_cache_found:
-        LOGGER.warning(
-            "Skipping Pivot Refresh check (no cache found in generated template)."
-        )
-    elif pivot_refresh_enabled:
-        print("Pivot Cache Refresh: ENABLED")
-    else:
-        raise RuntimeError("Pivot cache refreshOnLoad is not enabled.")
-
-
-if __name__ == "__main__":
-    main()
+    if pivot_cache_found:
+        assert pivot_refresh_enabled, "Pivot cache refreshOnLoad is not enabled."
