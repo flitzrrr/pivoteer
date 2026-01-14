@@ -1,0 +1,43 @@
+name: Bug Report
+description: Report a reproducible bug in pivoteer
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+  - type: input
+    id: version
+    attributes:
+      label: pivoteer version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.1"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal set of steps or sample code.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant logs or stack traces.
+      render: text
