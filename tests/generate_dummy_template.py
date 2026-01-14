@@ -6,7 +6,7 @@ import argparse
 import logging
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 import xlsxwriter
 
@@ -58,25 +58,31 @@ def _write_table(
 
 def _add_pivot_table(
     worksheet: xlsxwriter.worksheet.Worksheet, data_range: str
-) -> str:
+) -> Optional[str]:
     pivot_table_name = "PivotTable1"
-    worksheet.add_pivot_table(
-        {
-            "data": data_range,
-            "name": pivot_table_name,
-            "rows": [{"data": "Category"}],
-            "columns": [{"data": "Region"}],
-            "values": [{"data": "Amount", "subtotal": "sum"}],
-        }
-    )
-    return pivot_table_name
+    if hasattr(worksheet, "add_pivot_table"):
+        worksheet.add_pivot_table(
+            {
+                "data": data_range,
+                "name": pivot_table_name,
+                "rows": [{"data": "Category"}],
+                "columns": [{"data": "Region"}],
+                "values": [{"data": "Amount", "subtotal": "sum"}],
+            }
+        )
+        return pivot_table_name
+
+    LOGGER.warning("Pivot table API not available in installed xlsxwriter.")
+    return None
 
 
 def _add_slicer(
     worksheet: xlsxwriter.worksheet.Worksheet,
-    pivot_table_name: str,
+    pivot_table_name: Optional[str],
     field_name: str,
 ) -> None:
+    if not pivot_table_name:
+        return
     options = {"pivot_table": pivot_table_name, "field": field_name}
 
     if hasattr(worksheet, "insert_slicer"):
