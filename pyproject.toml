@@ -34,8 +34,8 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/my-org/pivoteer"
-Issues = "https://github.com/my-org/pivoteer/issues"
+Repository = "https://github.com/flitzrrr/pivoteer"
+Issues = "https://github.com/flitzrrr/pivoteer/issues"
 
 [project.optional-dependencies]
 dev = [
