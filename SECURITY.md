@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability, please report it responsibly.
 
-- Email: security@my-org.example
+- Email: martin@klein.business
 - Provide a clear description, steps to reproduce, and potential impact.
 
 We aim to acknowledge reports within 2 business days and provide a resolution
