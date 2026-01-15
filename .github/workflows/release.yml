@@ -6,7 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -25,3 +25,32 @@ jobs:
           python -m build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Extract release notes
+        id: release_notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          tag = os.environ.get("RELEASE_TAG", "")
+          version = tag.lstrip("v")
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+
+          pattern = rf"^## \\[{re.escape(version)}\\].*?$\\n(.*?)(?=^## \\[|\\Z)"
+          match = re.search(pattern, changelog, flags=re.M | re.S)
+          notes = match.group(1).strip() if match else ""
+
+          output = os.environ["GITHUB_OUTPUT"]
+          with open(output, "a", encoding="utf-8") as fh:
+              fh.write("notes<<EOF\n")
+              fh.write(notes + "\n")
+              fh.write("EOF\n")
+          PY
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.release_notes.outputs.notes }}
+          files: dist/*
