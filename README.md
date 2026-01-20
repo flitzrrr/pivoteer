@@ -54,13 +54,35 @@ pivoteer.save("report_output.xlsx")
   range based on the DataFrame shape.
 - Pivot refresh: sets `refreshOnLoad="1"` in
   `xl/pivotCache/pivotCacheDefinitionN.xml` when present.
+- Pivot cache field sync (opt-in): appends missing cache field entries for table
+  columns so new headers appear in existing PivotTables.
 
 ## Features
 
 - Surgical Data Injection: updates worksheet XML without touching sharedStrings.
 - Table Resizing: recalculates ListObject ranges to match injected data.
 - Pivot Preservation: sets pivot caches to refresh on load when present.
+- Optional Pivot Cache Field Sync: appends missing cache field metadata for new
+  table columns without touching PivotTable layouts.
 - Minimal IO: stream-based ZIP copy-and-replace for stability.
+
+## Pivot Cache Field Sync
+
+When new columns are added to an Excel Table, existing PivotTables often fail to
+show the new fields until the PivotCache metadata is updated. pivoteer can
+synchronize PivotCache field definitions so new table columns appear in the
+PivotTable field list.
+
+What pivoteer does:
+
+- Syncs PivotCache field metadata for the target table.
+- Appends missing cache fields so new columns are visible in the PivotTable UI.
+
+What pivoteer does not do:
+
+- Does not create PivotTables.
+- Does not modify PivotTable layouts or filters.
+- Does not touch slicers or formatting.
 
 ## Usage Patterns
 
@@ -76,20 +98,53 @@ p.apply_dataframe("CostData", pd.read_csv("costs.csv"))
 p.save("report_output.xlsx")
 ```
 
+### Opt-in pivot cache field sync
+
+```python
+from pivoteer.core import Pivoteer
+import pandas as pd
+
+p = Pivoteer("template.xlsx", enable_pivot_field_sync=True)
+p.apply_dataframe("RawData", pd.read_csv("usage.csv"))
+p.save("report_output.xlsx")
+```
+
+This flag is optional; when it is not set, pivoteer behaves exactly as before.
+
+### Advanced usage with TemplateEngine
+
+```python
+from pathlib import Path
+import pandas as pd
+
+from pivoteer.template_engine import TemplateEngine
+
+engine = TemplateEngine(Path("template.xlsx"))
+engine.apply_dataframe("RawData", pd.read_csv("usage.csv"))
+engine.sync_pivot_cache_fields()
+engine.ensure_pivot_refresh_on_load()
+parts = engine.get_modified_parts()
+```
+
 ### Large datasets
 
 pivoteer is optimized for replacing table data without rewriting the entire
 workbook. It is a good fit for large tables where preserving PivotTables and
 filters matters more than Excel formatting for each row.
 
+## Safety Guarantees
+
+- Opt-in only: the feature is disabled unless explicitly enabled.
+- Only missing cache fields are appended.
+- Existing cache field order is preserved.
+- PivotTable definitions are not modified.
+
 ## Limitations
 
-- The generated test template uses inline strings and does not create pivot
-  caches when the installed xlsxwriter lacks pivot table support.
-- Date formatting is injected as inline text; apply Excel formatting if needed.
-- Shared strings are not modified in Phase 1.
-- PivotTables are refreshed on open via `refreshOnLoad`, but pivoteer does not
-  recalculate pivot caches or modify pivot layout.
+- The PivotCache source must reference the named Excel Table.
+- The template must already contain PivotTables and pivot caches.
+- The structured table must exist and be the PivotTable cache source.
+- pivoteer does not auto-refresh the Excel UI; Excel recalculates pivots on open.
 
 ## Compatibility
 

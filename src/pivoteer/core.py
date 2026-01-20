@@ -18,8 +18,12 @@ LOGGER = logging.getLogger(__name__)
 class Pivoteer:
     """Public entry point for applying DataFrames to Excel templates."""
 
-    def __init__(self, template_path: str | Path) -> None:
+    def __init__(
+        self, template_path: str | Path, *, enable_pivot_field_sync: bool = False
+    ) -> None:
+        """Initialize with optional pivot cache field synchronization."""
         self._template_engine = TemplateEngine(Path(template_path))
+        self._enable_pivot_field_sync = enable_pivot_field_sync
 
     def apply_dataframe(self, table_name: str, df: pd.DataFrame) -> None:
         """Apply a DataFrame to the specified table."""
@@ -28,6 +32,8 @@ class Pivoteer:
     def save(self, output_path: str | Path) -> Path:
         """Write the modified template to a new file."""
         output_path = Path(output_path)
+        if self._enable_pivot_field_sync:
+            self._template_engine.sync_pivot_cache_fields()
         self._template_engine.ensure_pivot_refresh_on_load()
         modified_parts = self._template_engine.get_modified_parts()
 
