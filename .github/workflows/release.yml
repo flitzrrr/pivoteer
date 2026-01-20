@@ -32,16 +32,25 @@ jobs:
         run: |
           python - <<'PY'
           import os
-          import re
           from pathlib import Path
 
           tag = os.environ.get("RELEASE_TAG", "")
           version = tag.lstrip("v")
-          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
 
-          pattern = rf"^## \\[{re.escape(version)}\\].*?$\\n(.*?)(?=^## \\[|\\Z)"
-          match = re.search(pattern, changelog, flags=re.M | re.S)
-          notes = match.group(1).strip() if match else ""
+          header = f"## [{version}]"
+          notes_lines = []
+          in_section = False
+          for line in changelog:
+              if line.startswith("## ["):
+                  if in_section:
+                      break
+                  in_section = line.startswith(header)
+                  continue
+              if in_section:
+                  notes_lines.append(line)
+
+          notes = "\n".join(notes_lines).strip()
 
           output = os.environ["GITHUB_OUTPUT"]
           with open(output, "a", encoding="utf-8") as fh:
