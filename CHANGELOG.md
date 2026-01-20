@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2026-02-01
+
+- Add opt-in pivot cache field synchronization for new table columns
+
 ## [0.1.1] - 2026-01-15
 
 - Update PyPI project URLs

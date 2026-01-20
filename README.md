@@ -54,12 +54,16 @@ pivoteer.save("report_output.xlsx")
   range based on the DataFrame shape.
 - Pivot refresh: sets `refreshOnLoad="1"` in
   `xl/pivotCache/pivotCacheDefinitionN.xml` when present.
+- Pivot cache field sync (opt-in): appends missing cache field entries for table
+  columns so new headers appear in existing PivotTables.
 
 ## Features
 
 - Surgical Data Injection: updates worksheet XML without touching sharedStrings.
 - Table Resizing: recalculates ListObject ranges to match injected data.
 - Pivot Preservation: sets pivot caches to refresh on load when present.
+- Optional Pivot Cache Field Sync: appends missing cache field metadata for new
+  table columns without touching PivotTable layouts.
 - Minimal IO: stream-based ZIP copy-and-replace for stability.
 
 ## Usage Patterns
@@ -73,6 +77,17 @@ import pandas as pd
 p = Pivoteer("template.xlsx")
 p.apply_dataframe("SalesData", pd.read_csv("sales.csv"))
 p.apply_dataframe("CostData", pd.read_csv("costs.csv"))
+p.save("report_output.xlsx")
+```
+
+### Opt-in pivot cache field sync
+
+```python
+from pivoteer.core import Pivoteer
+import pandas as pd
+
+p = Pivoteer("template.xlsx", enable_pivot_field_sync=True)
+p.apply_dataframe("RawData", pd.read_csv("usage.csv"))
 p.save("report_output.xlsx")
 ```
 
@@ -90,6 +105,8 @@ filters matters more than Excel formatting for each row.
 - Shared strings are not modified in Phase 1.
 - PivotTables are refreshed on open via `refreshOnLoad`, but pivoteer does not
   recalculate pivot caches or modify pivot layout.
+- Pivot cache field sync only appends missing cache fields for PivotTables whose
+  cache source references the named Excel Table.
 
 ## Compatibility
 

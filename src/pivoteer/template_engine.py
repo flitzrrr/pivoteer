@@ -12,6 +12,7 @@ from lxml import etree
 
 from pivoteer.exceptions import InvalidDataError, TableNotFoundError, XmlStructureError
 from pivoteer.models import TableRef, WorkbookMap
+from pivoteer.pivot_cache_updater import sync_cache_fields
 from pivoteer.table_resizer import TableResizer, TableResizeResult
 from pivoteer.utils import parse_a1_range
 from pivoteer.xml_engine import XmlEngine
@@ -29,6 +30,7 @@ class TemplateEngine:
         self._workbook_map: WorkbookMap = self._xml_engine.build_workbook_map()
         self._tables: Dict[str, TableRef] = dict(self._workbook_map.tables)
         self._modified_trees: Dict[str, etree._ElementTree] = {}
+        self._updated_tables: set[str] = set()
 
     @property
     def template_path(self) -> Path:
@@ -76,6 +78,7 @@ class TemplateEngine:
             worksheet_path=table_ref.worksheet_path,
             ref=resize_result.updated_ref,
         )
+        self._updated_tables.add(table_name)
 
     def ensure_pivot_refresh_on_load(self) -> None:
         """Set refreshOnLoad=1 for all pivot cache definitions."""
@@ -88,6 +91,16 @@ class TemplateEngine:
                 tree = self._read_xml_part(archive, path)
                 root = tree.getroot()
                 root.set("refreshOnLoad", "1")
+                self._modified_trees[path] = tree
+
+    def sync_pivot_cache_fields(self) -> None:
+        """Append missing pivot cache fields for updated tables."""
+        if not self._updated_tables:
+            return
+
+        for table_name in sorted(self._updated_tables):
+            updated_parts = sync_cache_fields(self._workbook_map, table_name)
+            for path, tree in updated_parts.items():
                 self._modified_trees[path] = tree
 
     def get_modified_parts(self) -> Dict[str, bytes]:
