@@ -66,6 +66,24 @@ pivoteer.save("report_output.xlsx")
   table columns without touching PivotTable layouts.
 - Minimal IO: stream-based ZIP copy-and-replace for stability.
 
+## Pivot Cache Field Sync
+
+When new columns are added to an Excel Table, existing PivotTables often fail to
+show the new fields until the PivotCache metadata is updated. pivoteer can
+synchronize PivotCache field definitions so new table columns appear in the
+PivotTable field list.
+
+What pivoteer does:
+
+- Syncs PivotCache field metadata for the target table.
+- Appends missing cache fields so new columns are visible in the PivotTable UI.
+
+What pivoteer does not do:
+
+- Does not create PivotTables.
+- Does not modify PivotTable layouts or filters.
+- Does not touch slicers or formatting.
+
 ## Usage Patterns
 
 ### Multiple table updates
@@ -91,22 +109,42 @@ p.apply_dataframe("RawData", pd.read_csv("usage.csv"))
 p.save("report_output.xlsx")
 ```
 
+This flag is optional; when it is not set, pivoteer behaves exactly as before.
+
+### Advanced usage with TemplateEngine
+
+```python
+from pathlib import Path
+import pandas as pd
+
+from pivoteer.template_engine import TemplateEngine
+
+engine = TemplateEngine(Path("template.xlsx"))
+engine.apply_dataframe("RawData", pd.read_csv("usage.csv"))
+engine.sync_pivot_cache_fields()
+engine.ensure_pivot_refresh_on_load()
+parts = engine.get_modified_parts()
+```
+
 ### Large datasets
 
 pivoteer is optimized for replacing table data without rewriting the entire
 workbook. It is a good fit for large tables where preserving PivotTables and
 filters matters more than Excel formatting for each row.
 
+## Safety Guarantees
+
+- Opt-in only: the feature is disabled unless explicitly enabled.
+- Only missing cache fields are appended.
+- Existing cache field order is preserved.
+- PivotTable definitions are not modified.
+
 ## Limitations
 
-- The generated test template uses inline strings and does not create pivot
-  caches when the installed xlsxwriter lacks pivot table support.
-- Date formatting is injected as inline text; apply Excel formatting if needed.
-- Shared strings are not modified in Phase 1.
-- PivotTables are refreshed on open via `refreshOnLoad`, but pivoteer does not
-  recalculate pivot caches or modify pivot layout.
-- Pivot cache field sync only appends missing cache fields for PivotTables whose
-  cache source references the named Excel Table.
+- The PivotCache source must reference the named Excel Table.
+- The template must already contain PivotTables and pivot caches.
+- The structured table must exist and be the PivotTable cache source.
+- pivoteer does not auto-refresh the Excel UI; Excel recalculates pivots on open.
 
 ## Compatibility
 
