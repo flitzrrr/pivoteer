@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pivoteer"
-version = "0.1.1"
+version = "0.2.0"
 description = "Inject pandas DataFrames into Excel templates with table resizing and pivot refresh."
 readme = "README.md"
 requires-python = ">=3.10"
