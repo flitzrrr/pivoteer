@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.2] - 2026-02-01
+## [0.2.0] - 2026-02-01
 
 - Add opt-in pivot cache field synchronization for new table columns
 
