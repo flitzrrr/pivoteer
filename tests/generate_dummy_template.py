@@ -6,19 +6,17 @@ import argparse
 import logging
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Iterable, List, Optional
 
 import xlsxwriter
-
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _seed_rows() -> List[List[object]]:
+def _seed_rows() -> list[list[object]]:
     categories = ["Hardware", "Software", "Services"]
     regions = ["North", "South", "East", "West"]
     base = date(2024, 1, 1)
-    rows: List[List[object]] = []
+    rows: list[list[object]] = []
     amount = 100.0
 
     for i in range(12):
@@ -35,8 +33,8 @@ def _seed_rows() -> List[List[object]]:
 
 def _write_table(
     worksheet: xlsxwriter.worksheet.Worksheet,
-    headers: List[str],
-    rows: List[List[object]],
+    headers: list[str],
+    rows: list[list[object]],
 ) -> str:
     worksheet.write_row(0, 0, headers)
     for row_idx, row in enumerate(rows, start=1):
@@ -58,7 +56,7 @@ def _write_table(
 
 def _add_pivot_table(
     worksheet: xlsxwriter.worksheet.Worksheet, data_range: str
-) -> Optional[str]:
+) -> str | None:
     pivot_table_name = "PivotTable1"
     if hasattr(worksheet, "add_pivot_table"):
         worksheet.add_pivot_table(
@@ -78,7 +76,7 @@ def _add_pivot_table(
 
 def _add_slicer(
     worksheet: xlsxwriter.worksheet.Worksheet,
-    pivot_table_name: Optional[str],
+    pivot_table_name: str | None,
     field_name: str,
 ) -> None:
     if not pivot_table_name:

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import zipfile
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 import pytest
@@ -16,13 +15,12 @@ from pivoteer.pivot_cache_updater import sync_cache_fields
 from pivoteer.utils import column_index_to_letter
 from pivoteer.xml_engine import XmlEngine
 
-
 _NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 _NS_PKG_REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 
 
 def _write_minimal_xlsx(
-    path: Path, table_columns: List[str], cache_fields: List[str]
+    path: Path, table_columns: list[str], cache_fields: list[str]
 ) -> None:
     _write_minimal_xlsx_with_caches(
         path,
@@ -40,8 +38,8 @@ def _write_minimal_xlsx(
 def _write_minimal_xlsx_with_caches(
     path: Path,
     *,
-    table_columns: List[str],
-    cache_definitions: List[dict],
+    table_columns: list[str],
+    cache_definitions: list[dict],
     include_table_columns: bool = True,
 ) -> None:
     ref = f"A1:{column_index_to_letter(len(table_columns))}2"
@@ -154,7 +152,7 @@ def _main_namespace(tree: etree._ElementTree) -> str:
     return root.nsmap.get(None) or root.nsmap.get("main") or _NS_MAIN
 
 
-def _cache_fields(tree: etree._ElementTree) -> List[etree._Element]:
+def _cache_fields(tree: etree._ElementTree) -> list[etree._Element]:
     ns = _main_namespace(tree)
     cache_fields = tree.find(f".//{{{ns}}}cacheFields")
     if cache_fields is None:
@@ -162,12 +160,8 @@ def _cache_fields(tree: etree._ElementTree) -> List[etree._Element]:
     return cache_fields.findall(f"{{{ns}}}cacheField")
 
 
-def _cache_field_names(tree: etree._ElementTree) -> List[str]:
-    return [
-        node.get("name")
-        for node in _cache_fields(tree)
-        if node.get("name")
-    ]
+def _cache_field_names(tree: etree._ElementTree) -> list[str]:
+    return [node.get("name") for node in _cache_fields(tree) if node.get("name")]
 
 
 def _read_xml(archive: zipfile.ZipFile, path: str) -> etree._ElementTree:

@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from lxml import etree
 
+from pivoteer.exceptions import InvalidDataError, XmlStructureError
 from pivoteer.xml_engine import XmlEngine, read_xml_part
 
 _NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -17,11 +18,7 @@ _NSMAP = {"main": _NS_MAIN}
 
 def _make_sheet_tree() -> etree._ElementTree:
     """Create a minimal worksheet tree with an empty sheetData."""
-    xml = (
-        f'<worksheet xmlns="{_NS_MAIN}">'
-        "<sheetData/>"
-        "</worksheet>"
-    )
+    xml = f'<worksheet xmlns="{_NS_MAIN}"><sheetData/></worksheet>'
     return etree.fromstring(xml.encode()).getroottree()
 
 
@@ -160,7 +157,7 @@ class TestInjectRowsInlineStrings:
     def test_zero_start_row_raises(self, tmp_path) -> None:
         engine = self._make_engine(tmp_path)
         tree = _make_sheet_tree()
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidDataError):
             engine.inject_rows_inline_strings(tree, 0, 1, [["x"]])
 
     def test_empty_rows_no_change(self, tmp_path) -> None:
@@ -190,7 +187,7 @@ class TestReadXmlPart:
             pass
 
         with zipfile.ZipFile(path, "r") as archive:
-            with pytest.raises(Exception, match="Missing XML part"):
+            with pytest.raises(XmlStructureError, match="Missing XML part"):
                 read_xml_part(archive, "nonexistent.xml")
 
     def test_reads_valid_xml(self, tmp_path) -> None:

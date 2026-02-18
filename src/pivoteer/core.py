@@ -10,7 +10,6 @@ import pandas as pd
 
 from pivoteer.template_engine import TemplateEngine
 
-
 LOGGER = logging.getLogger(__name__)
 
 

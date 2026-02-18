@@ -6,15 +6,17 @@ import logging
 import posixpath
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional
 
-from lxml import etree
 import pandas as pd
+from lxml import etree
 
-from pivoteer.exceptions import InvalidDataError, TemplateNotFoundError, XmlStructureError
+from pivoteer.exceptions import (
+    InvalidDataError,
+    TemplateNotFoundError,
+    XmlStructureError,
+)
 from pivoteer.models import TableRef, WorkbookMap, WorksheetInfo
-from pivoteer.utils import build_a1_cell, column_index_to_letter, parse_a1_range
-
+from pivoteer.utils import build_a1_cell
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +68,9 @@ class XmlEngine:
             pivot_cache_definition_paths=pivot_cache_paths,
         )
 
-    def read_sheet_xml(self, archive: zipfile.ZipFile, worksheet_path: str) -> etree._ElementTree:
+    def read_sheet_xml(
+        self, archive: zipfile.ZipFile, worksheet_path: str
+    ) -> etree._ElementTree:
         """Read worksheet XML as an lxml tree."""
         return self._read_xml(archive, worksheet_path)
 
@@ -84,7 +88,7 @@ class XmlEngine:
         tree: etree._ElementTree,
         start_row: int,
         start_col: int,
-        rows: List[List[object]],
+        rows: list[list[object]],
     ) -> None:
         """Inject data rows into sheetData using inline strings for text."""
         if start_row < 1 or start_col < 1:
@@ -113,11 +117,11 @@ class XmlEngine:
         self,
         workbook_tree: etree._ElementTree,
         rels_tree: etree._ElementTree,
-    ) -> Dict[str, WorksheetInfo]:
+    ) -> dict[str, WorksheetInfo]:
         sheet_nodes = workbook_tree.findall(".//main:sheets/main:sheet", _NSMAP_MAIN)
         rel_map = self._parse_relationships(rels_tree)
 
-        worksheets: Dict[str, WorksheetInfo] = {}
+        worksheets: dict[str, WorksheetInfo] = {}
         for sheet in sheet_nodes:
             name = sheet.get("name")
             sheet_id = sheet.get("sheetId")
@@ -139,12 +143,14 @@ class XmlEngine:
     def _parse_tables(
         self,
         archive: zipfile.ZipFile,
-        worksheets: Dict[str, WorksheetInfo],
-    ) -> Dict[str, TableRef]:
-        tables: Dict[str, TableRef] = {}
+        worksheets: dict[str, WorksheetInfo],
+    ) -> dict[str, TableRef]:
+        tables: dict[str, TableRef] = {}
         for worksheet in worksheets.values():
             sheet_tree = self._read_xml(archive, worksheet.path)
-            table_parts = sheet_tree.findall(".//main:tableParts/main:tablePart", _NSMAP_MAIN)
+            table_parts = sheet_tree.findall(
+                ".//main:tableParts/main:tablePart", _NSMAP_MAIN
+            )
             if not table_parts:
                 continue
 
@@ -177,19 +183,15 @@ class XmlEngine:
 
         return tables
 
-    def _parse_pivot_caches(
-        self, rels_tree: etree._ElementTree
-    ) -> Dict[str, str]:
+    def _parse_pivot_caches(self, rels_tree: etree._ElementTree) -> dict[str, str]:
         rel_map = self._parse_relationships(rels_tree)
-        cache_paths: Dict[str, str] = {}
+        cache_paths: dict[str, str] = {}
         for rel_id, target in rel_map.items():
             if "pivotCache" in target:
                 cache_paths[rel_id] = f"xl/{target}"
         return cache_paths
 
-    def read_xml(
-        self, archive: zipfile.ZipFile, path: str
-    ) -> etree._ElementTree:
+    def read_xml(self, archive: zipfile.ZipFile, path: str) -> etree._ElementTree:
         return read_xml_part(archive, path)
 
     # Backward-compatible alias
@@ -198,8 +200,8 @@ class XmlEngine:
     def _write_xml(self, archive: zipfile.ZipFile, path: str, data: bytes) -> None:
         archive.writestr(path, data)
 
-    def _parse_relationships(self, rels_tree: etree._ElementTree) -> Dict[str, str]:
-        rels: Dict[str, str] = {}
+    def _parse_relationships(self, rels_tree: etree._ElementTree) -> dict[str, str]:
+        rels: dict[str, str] = {}
         rel_nodes = rels_tree.findall(".//rel:Relationship", _NSMAP_PKG)
         for rel in rel_nodes:
             rel_id = rel.get("Id")
@@ -220,7 +222,9 @@ class XmlEngine:
             normalized = f"xl/{normalized.lstrip('./')}"
         return normalized
 
-    def _find_or_create_row(self, sheet_data: etree._Element, row_idx: int) -> etree._Element:
+    def _find_or_create_row(
+        self, sheet_data: etree._Element, row_idx: int
+    ) -> etree._Element:
         row = sheet_data.find(f"main:row[@r='{row_idx}']", namespaces=_NSMAP_MAIN)
         if row is not None:
             return row
@@ -253,10 +257,7 @@ class XmlEngine:
             v.text = str(value)
             return
 
-        if hasattr(value, "isoformat"):
-            text_value = value.isoformat()
-        else:
-            text_value = str(value)
+        text_value = value.isoformat() if hasattr(value, "isoformat") else str(value)
 
         cell.set("t", "inlineStr")
         inline = etree.SubElement(cell, f"{{{_NS_MAIN}}}is")

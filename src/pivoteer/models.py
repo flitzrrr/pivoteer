@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
 
 
 @dataclass(frozen=True)
@@ -33,7 +32,7 @@ class WorkbookMap:
     """Holds resolved workbook references used for XML updates."""
 
     template_path: Path
-    worksheets: Dict[str, WorksheetInfo]
-    tables: Dict[str, TableRef]
-    pivot_cache_definition_paths: Dict[str, str]
-    shared_strings_path: Optional[str] = None
+    worksheets: dict[str, WorksheetInfo]
+    tables: dict[str, TableRef]
+    pivot_cache_definition_paths: dict[str, str]
+    shared_strings_path: str | None = None

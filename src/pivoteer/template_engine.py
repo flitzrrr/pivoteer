@@ -5,18 +5,16 @@ from __future__ import annotations
 import logging
 import zipfile
 from pathlib import Path
-from typing import Dict
 
 import pandas as pd
 from lxml import etree
 
-from pivoteer.exceptions import InvalidDataError, TableNotFoundError, XmlStructureError
+from pivoteer.exceptions import InvalidDataError, TableNotFoundError
 from pivoteer.models import TableRef, WorkbookMap
 from pivoteer.pivot_cache_updater import sync_cache_fields
-from pivoteer.table_resizer import TableResizer, TableResizeResult
+from pivoteer.table_resizer import TableResizer
 from pivoteer.utils import parse_a1_range
 from pivoteer.xml_engine import XmlEngine
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,8 +26,8 @@ class TemplateEngine:
         self._xml_engine = XmlEngine(template_path)
         self._table_resizer = TableResizer()
         self._workbook_map: WorkbookMap = self._xml_engine.build_workbook_map()
-        self._tables: Dict[str, TableRef] = dict(self._workbook_map.tables)
-        self._modified_trees: Dict[str, etree._ElementTree] = {}
+        self._tables: dict[str, TableRef] = dict(self._workbook_map.tables)
+        self._modified_trees: dict[str, etree._ElementTree] = {}
         self._updated_tables: set[str] = set()
 
     @property
@@ -103,18 +101,16 @@ class TemplateEngine:
             for path, tree in updated_parts.items():
                 self._modified_trees[path] = tree
 
-    def get_modified_parts(self) -> Dict[str, bytes]:
+    def get_modified_parts(self) -> dict[str, bytes]:
         """Serialize modified XML trees to bytes for writing."""
-        parts: Dict[str, bytes] = {}
+        parts: dict[str, bytes] = {}
         for path, tree in self._modified_trees.items():
             parts[path] = etree.tostring(
                 tree, encoding="UTF-8", xml_declaration=True, standalone="yes"
             )
         return parts
 
-    def _read_xml_part(
-        self, archive: zipfile.ZipFile, path: str
-    ) -> etree._ElementTree:
+    def _read_xml_part(self, archive: zipfile.ZipFile, path: str) -> etree._ElementTree:
         cached = self._modified_trees.get(path)
         if cached is not None:
             return cached
