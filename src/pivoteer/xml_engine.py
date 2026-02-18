@@ -6,7 +6,7 @@ import logging
 import posixpath
 import zipfile
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from lxml import etree
 import pandas as pd
@@ -25,6 +25,16 @@ _NS_PKG_REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 _NSMAP_MAIN = {"main": _NS_MAIN}
 _NSMAP_REL = {"rel": _NS_REL}
 _NSMAP_PKG = {"rel": _NS_PKG_REL}
+
+
+def read_xml_part(archive: zipfile.ZipFile, path: str) -> etree._ElementTree:
+    """Read an XML part from a ZIP archive and return an lxml ElementTree."""
+    try:
+        data = archive.read(path)
+    except KeyError as exc:
+        raise XmlStructureError(f"Missing XML part: {path}") from exc
+    parser = etree.XMLParser(remove_blank_text=False)
+    return etree.fromstring(data, parser).getroottree()
 
 
 class XmlEngine:
@@ -177,15 +187,13 @@ class XmlEngine:
                 cache_paths[rel_id] = f"xl/{target}"
         return cache_paths
 
-    def _read_xml(
+    def read_xml(
         self, archive: zipfile.ZipFile, path: str
     ) -> etree._ElementTree:
-        try:
-            data = archive.read(path)
-        except KeyError as exc:
-            raise XmlStructureError(f"Missing XML part: {path}") from exc
-        parser = etree.XMLParser(remove_blank_text=False)
-        return etree.fromstring(data, parser).getroottree()
+        return read_xml_part(archive, path)
+
+    # Backward-compatible alias
+    _read_xml = read_xml
 
     def _write_xml(self, archive: zipfile.ZipFile, path: str, data: bytes) -> None:
         archive.writestr(path, data)
@@ -258,7 +266,7 @@ class XmlEngine:
     def _is_missing(self, value: object) -> bool:
         try:
             return bool(pd.isna(value))
-        except Exception:
+        except (TypeError, ValueError):
             return False
 
     def _sort_rows(self, sheet_data: etree._Element) -> None:
