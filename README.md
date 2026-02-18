@@ -126,6 +126,31 @@ engine.ensure_pivot_refresh_on_load()
 parts = engine.get_modified_parts()
 ```
 
+### Low-level XML access
+
+For custom XML inspection or modification, `read_xml_part` reads any XML part
+from an Excel archive:
+
+```python
+import zipfile
+from pivoteer.xml_engine import read_xml_part
+
+with zipfile.ZipFile("template.xlsx", "r") as archive:
+    tree = read_xml_part(archive, "xl/workbook.xml")
+    print(tree.getroot().tag)
+```
+
+### Supported data types
+
+pivoteer handles the following DataFrame value types when injecting rows:
+
+| Type | Excel representation |
+|---|---|
+| `int`, `float` | Numeric cell (`<v>`) |
+| `str` | Inline string (`<is><t>`) |
+| `datetime.date`, `datetime.datetime` | Inline string (ISO 8601) |
+| `None`, `NaN`, `NaT` | Empty cell (no children) |
+
 ### Large datasets
 
 pivoteer is optimized for replacing table data without rewriting the entire
