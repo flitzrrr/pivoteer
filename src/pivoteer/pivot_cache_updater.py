@@ -7,8 +7,9 @@ from typing import Dict, List
 
 from lxml import etree
 
-from pivoteer.exceptions import PivotCacheError, TableNotFoundError, XmlStructureError
+from pivoteer.exceptions import PivotCacheError, TableNotFoundError
 from pivoteer.models import WorkbookMap
+from pivoteer.xml_engine import read_xml_part
 
 
 _NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -30,12 +31,12 @@ def sync_cache_fields(
         return {}
 
     with zipfile.ZipFile(workbook_map.template_path, "r") as archive:
-        table_tree = _read_xml(archive, table_ref.table_path)
+        table_tree = read_xml_part(archive, table_ref.table_path)
         table_columns = _extract_table_columns(table_tree)
 
         updated_parts: Dict[str, etree._ElementTree] = {}
         for cache_path in cache_paths:
-            cache_tree = _read_xml(archive, cache_path)
+            cache_tree = read_xml_part(archive, cache_path)
             if _cache_source_table_name(cache_tree) != table_name:
                 continue
             updated = _append_missing_cache_fields(cache_tree, table_columns)
@@ -45,13 +46,6 @@ def sync_cache_fields(
         return updated_parts
 
 
-def _read_xml(archive: zipfile.ZipFile, path: str) -> etree._ElementTree:
-    try:
-        data = archive.read(path)
-    except KeyError as exc:
-        raise XmlStructureError(f"Missing XML part: {path}") from exc
-    parser = etree.XMLParser(remove_blank_text=False)
-    return etree.fromstring(data, parser).getroottree()
 
 
 def _extract_table_columns(table_tree: etree._ElementTree) -> List[str]:

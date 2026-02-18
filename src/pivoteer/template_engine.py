@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import zipfile
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict
 
 import pandas as pd
 from lxml import etree
@@ -118,4 +118,4 @@ class TemplateEngine:
         cached = self._modified_trees.get(path)
         if cached is not None:
             return cached
-        return self._xml_engine._read_xml(archive, path)
+        return self._xml_engine.read_xml(archive, path)
