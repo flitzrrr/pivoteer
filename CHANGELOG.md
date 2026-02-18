@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.2.2] - 2026-02-18
+
+### Changed
+
+- Pin all GitHub Actions to immutable commit SHAs for supply chain security
+- Upgrade `actions/checkout` v4 → v6 and `actions/setup-python` v5 → v6
+- Add Python 3.13 to CI test matrix and classifiers
+- Replace black with ruff for linting and formatting
+- Add test coverage enforcement (`--cov-fail-under=70`, currently 93%)
+- Split CI into parallel jobs: lint, tests (×4 Python versions), package
+- Limit push CI trigger to `main` branch to avoid duplicate runs
+- Enable pip caching for faster CI runs
+- Add `environment: pypi` to release workflow for Trusted Publishing
+- Add explicit `permissions: contents: read` to CI workflow
+- Modernize all type annotations (`Dict` → `dict`, `List` → `list`, etc.)
+
+### Added
+
+- Ruff configuration in `pyproject.toml` (E, W, F, I, UP, B, SIM rules)
+- `pytest-cov` and `ruff` as dev dependencies
+- OS dropdown field in bug report issue template
+- Dependency labels in Dependabot configuration
+
+### Removed
+
+- Black configuration (replaced by ruff)
+
 ## [0.2.1] - 2026-02-18
 
 ### Fixed
