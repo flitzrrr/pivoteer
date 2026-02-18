@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import re
-from typing import Tuple
-
 
 _A1_RE = re.compile(r"^([A-Z]+)([0-9]+)$")
 _A1_RANGE_RE = re.compile(r"^([A-Z]+[0-9]+):([A-Z]+[0-9]+)$")
@@ -34,7 +32,7 @@ def column_letter_to_index(letters: str) -> int:
     return index
 
 
-def parse_a1_cell(cell: str) -> Tuple[int, int]:
+def parse_a1_cell(cell: str) -> tuple[int, int]:
     """Parse an A1 cell reference into (row, col) 1-based coordinates."""
     match = _A1_RE.match(cell)
     if not match:
@@ -44,7 +42,7 @@ def parse_a1_cell(cell: str) -> Tuple[int, int]:
     return int(row_str), column_letter_to_index(col_letters)
 
 
-def parse_a1_range(a1_range: str) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+def parse_a1_range(a1_range: str) -> tuple[tuple[int, int], tuple[int, int]]:
     """Parse an A1 range like A1:D10 into row/col tuples."""
     match = _A1_RANGE_RE.match(a1_range)
     if not match:
@@ -61,9 +59,7 @@ def build_a1_cell(row: int, col: int) -> str:
     return f"{column_index_to_letter(col)}{row}"
 
 
-def build_a1_range(
-    start_row: int, start_col: int, end_row: int, end_col: int
-) -> str:
+def build_a1_range(start_row: int, start_col: int, end_row: int, end_col: int) -> str:
     """Build an A1 range from 1-based coordinates."""
     if end_row < start_row or end_col < start_col:
         raise ValueError("Range end must be >= range start.")

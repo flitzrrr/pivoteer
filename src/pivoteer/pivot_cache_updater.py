@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import zipfile
-from typing import Dict, List
 
 from lxml import etree
 
@@ -11,13 +10,12 @@ from pivoteer.exceptions import PivotCacheError, TableNotFoundError
 from pivoteer.models import WorkbookMap
 from pivoteer.xml_engine import read_xml_part
 
-
 _NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 
 
 def sync_cache_fields(
     workbook_map: WorkbookMap, table_name: str
-) -> Dict[str, etree._ElementTree]:
+) -> dict[str, etree._ElementTree]:
     """Sync pivot cache field names with the specified table's columns.
 
     Returns a mapping of modified pivot cache definition paths to XML trees.
@@ -34,7 +32,7 @@ def sync_cache_fields(
         table_tree = read_xml_part(archive, table_ref.table_path)
         table_columns = _extract_table_columns(table_tree)
 
-        updated_parts: Dict[str, etree._ElementTree] = {}
+        updated_parts: dict[str, etree._ElementTree] = {}
         for cache_path in cache_paths:
             cache_tree = read_xml_part(archive, cache_path)
             if _cache_source_table_name(cache_tree) != table_name:
@@ -46,22 +44,21 @@ def sync_cache_fields(
         return updated_parts
 
 
-
-
-def _extract_table_columns(table_tree: etree._ElementTree) -> List[str]:
+def _extract_table_columns(table_tree: etree._ElementTree) -> list[str]:
     ns = _get_main_namespace(table_tree)
     table_columns = table_tree.find(f".//{{{ns}}}tableColumns")
     if table_columns is None:
         raise PivotCacheError("Table columns element not found.")
 
-    columns: List[str] = []
+    columns: list[str] = []
     for column in table_columns.findall(f"{{{ns}}}tableColumn"):
         name = column.get("name")
         if name:
             columns.append(name)
 
     if not columns:
-        raise PivotCacheError("Table columns are empty; cannot sync pivot cache fields.")
+        msg = "Table columns are empty; cannot sync pivot cache fields."
+        raise PivotCacheError(msg)
     return columns
 
 
@@ -76,12 +73,13 @@ def _cache_source_table_name(cache_tree: etree._ElementTree) -> str | None:
 
 
 def _append_missing_cache_fields(
-    cache_tree: etree._ElementTree, table_columns: List[str]
+    cache_tree: etree._ElementTree, table_columns: list[str]
 ) -> bool:
     ns = _get_main_namespace(cache_tree)
     cache_fields = cache_tree.find(f".//{{{ns}}}cacheFields")
     if cache_fields is None:
-        raise PivotCacheError("cacheFields element not found in pivot cache definition.")
+        msg = "cacheFields element not found in pivot cache definition."
+        raise PivotCacheError(msg)
 
     existing_fields = [
         field.get("name")

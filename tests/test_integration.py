@@ -5,13 +5,11 @@ from __future__ import annotations
 import posixpath
 import zipfile
 from pathlib import Path
-from typing import Dict
 
 from lxml import etree
 
-from pivoteer.utils import parse_a1_range
 from pivoteer.core import Pivoteer
-
+from pivoteer.utils import parse_a1_range
 
 _NS_MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 _NS_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -27,8 +25,8 @@ def _read_xml(archive: zipfile.ZipFile, path: str) -> etree._ElementTree:
     return etree.fromstring(data, parser).getroottree()
 
 
-def _parse_relationships(rels_tree: etree._ElementTree) -> Dict[str, str]:
-    rels: Dict[str, str] = {}
+def _parse_relationships(rels_tree: etree._ElementTree) -> dict[str, str]:
+    rels: dict[str, str] = {}
     rel_nodes = rels_tree.findall(".//rel:Relationship", namespaces=_NSMAP_PKG)
     for rel in rel_nodes:
         rel_id = rel.get("Id")
@@ -53,7 +51,9 @@ def _resolve_table_path(archive: zipfile.ZipFile, table_name: str) -> str:
             continue
 
         worksheet_path = f"xl/{worksheet_target}"
-        rels_path = Path(worksheet_path).parent / "_rels" / f"{Path(worksheet_path).name}.rels"
+        rels_path = (
+            Path(worksheet_path).parent / "_rels" / f"{Path(worksheet_path).name}.rels"
+        )
         rels_tree = _read_xml(archive, str(rels_path))
         worksheet_rel_map = _parse_relationships(rels_tree)
 
@@ -84,8 +84,9 @@ def _resolve_table_path(archive: zipfile.ZipFile, table_name: str) -> str:
 
 
 def _build_output_report(template_path: Path, output_path: Path) -> None:
-    import pandas as pd
     from datetime import date, timedelta
+
+    import pandas as pd
 
     data = []
     base = date(2024, 1, 1)
